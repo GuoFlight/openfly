@@ -1,0 +1,25 @@
+[openfly]
+pathBak="test/bak"
+
+[api]
+admin_user="admin"
+admin_password="admin"
+expire=3600
+
+[log]
+level="TRACE"    #INFO、WARN等
+path="./logs"
+rotationCount=3   #日志文件保存个数
+
+[http]
+port=1216
+
+[etcd]
+server="172.16.1.128:2379"
+timeout=2        # 单位：s
+prefix="/openfly"
+
+[nginx]
+weightDefault=10
+maxFailsDefault=1
+failTimeoutDefault=10

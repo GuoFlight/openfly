@@ -1,0 +1,14 @@
+.idea
+.DS_Store
+cicd/output
+cicd/build
+common/logs
+common/data
+common/test
+main
+logs
+data
+openfly
+test
+output
+configDev.toml
