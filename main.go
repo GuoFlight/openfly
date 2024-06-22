@@ -26,7 +26,7 @@ func main() {
 	// 更新Nginx配置
 	gerr := common.GNginx.Reset()
 	if gerr != nil {
-		logger.GLogger.Fatal("初始化Nginx配置失败:", gerr)
+		logger.GLogger.Error("初始化Nginx配置失败:", gerr)
 	}
 
 	// 监控etcd

@@ -56,6 +56,7 @@ func TestNginx_GenConfigL4(t *testing.T) {
 		Listen:       8081,
 		Upstream:     upstream,
 		IncludeFiles: []string{"/a/b.conf", "/c/d.conf"},
+		Comments:     []string{"我是注释", "I am the comment."},
 		WhiteList: []WhiteListItem{
 			{
 				conf.Allow,
@@ -75,7 +76,7 @@ func TestNginx_GenConfigL4(t *testing.T) {
 }
 func TestNginx_WriteFile(t *testing.T) {
 	conf.ParseConfig("../config.toml")
-	conf.PathData = "../test/l4"
+	conf.PathData = "/tmp"
 	upstream := Upstream{
 		Hosts: []UpstreamHost{
 			{
@@ -99,6 +100,7 @@ func TestNginx_WriteFile(t *testing.T) {
 		Listen:       8081,
 		Upstream:     upstream,
 		IncludeFiles: []string{"/a/b.conf", "/c/d.conf"},
+		Comments:     []string{"我是注释", "I am the comment."},
 		WhiteList: []WhiteListItem{
 			{
 				conf.Allow,

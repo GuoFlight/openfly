@@ -29,5 +29,8 @@ func StartHttpServer() {
 
 	// 启动http服务
 	logger.GLogger.Info("开始启动http服务")
-	router.Run(fmt.Sprintf(":%d", conf.GConf.Http.Port))
+	err := router.Run(fmt.Sprintf(":%d", conf.GConf.Http.Port))
+	if err != nil {
+		logger.GLogger.Fatal(err)
+	}
 }

@@ -23,8 +23,44 @@ type Nginx struct {
 
 var GNginx Nginx
 
-// todo
-func (n *Nginx) CheckConfigL4(l4 []NginxConfL4) *gerror.Gerr {
+func (n *Nginx) IsValidWhiteList(wls []WhiteListItem) *gerror.Gerr {
+	for _, wl := range wls {
+		// 检查类型是否正确
+		if wl.Type != "allow" && wl.Type != "deny" {
+			return gerror.NewErr(fmt.Sprintf("invalid type of white list: %s", wl.Type))
+		}
+		// 检查target是否为ip、网段。
+		if !utils.IsValidNetSeg(wl.Target) && !utils.IsValidIp(wl.Target) && wl.Target != "all" {
+			return gerror.NewErr(fmt.Sprintf("invalid target of white list: %s", wl.Target))
+		}
+	}
+	return nil
+}
+
+func (n *Nginx) CheckConfigL4(l4s []NginxConfL4) *gerror.Gerr {
+	for _, l4 := range l4s {
+		// 判断监听端口是否合法
+		if !utils.IsValidPort(l4.Listen) {
+			return gerror.NewErr(fmt.Sprintf("invalid port: %d", l4.Listen))
+		}
+		// 参数校验：upstream
+		for _, host := range l4.Upstream.Hosts {
+			// 判断上游端口是否合法
+			if !utils.IsValidPort(host.Port) {
+				return gerror.NewErr(fmt.Sprintf("invalid port: %d", host.Port))
+			}
+			// 校验参数：host
+			if !utils.IsValidIp(host.Ip) {
+				return gerror.NewErr(fmt.Sprintf("invalid ip: %s", host.Ip))
+			}
+		}
+		// 校验参数：白名单
+		gerr := n.IsValidWhiteList(l4.WhiteList)
+		if gerr != nil {
+			return gerr
+		}
+
+	}
 	return nil
 }
 func (n *Nginx) GenFilePathL4(l4 NginxConfL4) string {
@@ -36,6 +72,12 @@ func (n *Nginx) GenConfigL4(l4 NginxConfL4) (string, *gerror.Gerr) {
 	if gerr != nil {
 		return "", gerr
 	}
+	// 生成注释
+	var comments []string
+	for _, comment := range l4.Comments {
+		comments = append(comments, "# "+comment)
+	}
+	commentStr := strings.Join(comments, "\n")
 	// 开始生成server块
 	var confServer []string
 	// 生成upstream
@@ -60,8 +102,7 @@ func (n *Nginx) GenConfigL4(l4 NginxConfL4) (string, *gerror.Gerr) {
 		}
 		confServer = append(confServer, strings.Join(confWhiteList, "\n\t"))
 	}
-	return fmt.Sprintf("%s\nserver{\n\t%s\n}", confUpstream, strings.Join(confServer, "\n\t")), nil
-
+	return fmt.Sprintf("%s\n%s\nserver{\n\t%s\n}", commentStr, confUpstream, strings.Join(confServer, "\n\t")), nil
 }
 func (n *Nginx) genConfigL4Upstream(upstream Upstream, port int) string {
 	var confUpstream []string
@@ -135,11 +176,12 @@ func (n *Nginx) delFileAndReload(l4 NginxConfL4) *gerror.Gerr {
 	_, gerr := n.testAndReload()
 	return gerr
 }
-func (n *Nginx) test() (string, *gerror.Gerr) {
+func (n *Nginx) Test() (string, *gerror.Gerr) {
+	// fmt.Println("发起nginx测试")
 	cmd := exec.Command("nginx", "-t")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return string(output), gerror.NewErr(string(output) + " " + err.Error())
+		return string(output), gerror.NewErr(string(output) + "." + err.Error())
 	}
 	return string(output), nil
 }
@@ -152,7 +194,7 @@ func (n *Nginx) reload() (string, *gerror.Gerr) {
 	return string(output), nil
 }
 func (n *Nginx) testAndReload() (string, *gerror.Gerr) {
-	output, gerr := n.test()
+	output, gerr := n.Test()
 	if gerr != nil {
 		return output, gerr
 	}
@@ -199,14 +241,18 @@ func (n *Nginx) Reset() *gerror.Gerr {
 		return nil
 	})
 	if err != nil {
-		logger.GLogger.Fatal(err)
+		return gerror.NewErr(err.Error())
 	}
 	// 写入配置
+	var gerrs []string
 	for _, conf := range AllConfig {
 		gerr := n.writeFileAndReload(conf)
 		if gerr != nil {
-			logger.GLogger.Fatal(gerr)
+			gerrs = append(gerrs, gerr.Error())
 		}
+	}
+	if len(gerrs) > 0 {
+		return gerror.NewErr(strings.Join(gerrs, ","))
 	}
 	return nil
 }

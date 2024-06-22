@@ -28,3 +28,28 @@ func DelFile(path string) error {
 	}
 	return os.RemoveAll(pathAbs)
 }
+
+func IsValidPort(port int) bool {
+	if port <= 0 || port >= 65536 {
+		return false
+	}
+	return true
+}
+
+func IsValidIp(ip string) bool {
+	ipAddr := net.ParseIP(ip)
+	if ipAddr == nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+// IsValidNetSeg 判断是否为合理的网段
+func IsValidNetSeg(netSeg string) bool {
+	_, _, err := net.ParseCIDR(netSeg)
+	if err != nil {
+		return false
+	}
+	return true
+}

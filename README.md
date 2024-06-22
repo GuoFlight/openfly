@@ -1,10 +1,8 @@
 # 简介
 
-作者：京城郭少
+> 作者：京城郭少
 
-# 简介
-
-> 基于nginx的4层代理项目
+> 基于nginx的4层代理管理平台
 
 支持的功能：
 * 被动健康检查
@@ -13,20 +11,15 @@
 * 哈希
 * backup冗余互备
 * weight权重
+* 注释
 * ......
-
-# 启动
-
-```shell
-go run main.go
-go run main.go -c ./config.toml
-```
 
 # 部署openfly
 
 部署nginx：
 
 * 目标：部署一个支持stream模块的nginx。
+* 步骤仅供参考，可自行发挥。
 
 ```shell
 systemctl stop firewalld
@@ -99,10 +92,31 @@ source /etc/bashrc
 # 启动openfly
 
 ```shell
+# 会生成data目录，里面都是nginx的4层代理配置文件，nginx需要导入这个目录：include xxx/data/*.conf;
 vim config-vx.x.x.toml                  # 编辑配置文件
 ./openfly-vx.x.x -c config-vx.x.x.toml  # 启动openfly
 ```
 
-<br>
+# Demo：添加一个nginx配置
 
-（未经许可请不要应用在任何商业用途上）
+```shell
+token=$(curl -s -XPOST http://127.0.0.1:1216/v1/login -d "{\"username\":\"admin\",\"password\":\"admin\"}" -H "Content-Type: application/json" | jq -r .data)
+curl -i -H "Content-Type: application/json" -XPOST -H "Authorization: ${token}" http://127.0.0.1:1216/v1/admin/nginx/add -d '
+{
+    "listen":30001,
+    "upstream":{
+        "hosts":[
+            {
+                "ip":"1.1.1.1",
+                "port":53
+            }
+        ]
+    }
+}'
+```
+
+# API
+
+在这里可以查看各版本的API：https://github.com/GuoFlight/openfly/tree/main/docs
+
+<br>

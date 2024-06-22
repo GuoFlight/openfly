@@ -7,6 +7,7 @@ type NginxConfL4 struct {
 	Upstream     Upstream        `json:"upstream"`
 	IncludeFiles []string        `json:"includeFiles,omitempty"`
 	WhiteList    []WhiteListItem `json:"whiteList,omitempty"`
+	Comments     []string        `json:"comments,omitempty"`
 }
 type WhiteListItem struct {
 	Type   conf.OpWhiteList `json:"type"`
@@ -27,7 +28,7 @@ type Upstream struct {
 }
 type UpstreamHost struct {
 	Ip                string `json:"ip"`
-	Port              uint16 `json:"port"`
+	Port              int    `json:"port"`
 	Weight            int    `json:"weight,omitempty"`
 	MaxFails          int    `json:"maxFails,omitempty"`
 	FailTimeoutSecond int    `json:"failTimeoutSecond,omitempty"`

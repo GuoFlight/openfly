@@ -8,8 +8,8 @@ curl http://127.0.0.1:1216/v1/health
 
 ```shell
 # 获取Token
-curl -XPOST http://127.0.0.1:1216/v1/login -d "{\"username\":\"admin\",\"password\":\"admin\"}" -H "Content-Type: application/json"
-token=$(curl -s -XPOST http://127.0.0.1:1216/v1/login -d "{\"username\":\"admin\",\"password\":\"admin\"}" -H "Content-Type: application/json" | jq .data)
+token=$(curl -s -XPOST http://127.0.0.1:1216/v1/login -d "{\"username\":\"admin\",\"password\":\"admin\"}" -H "Content-Type: application/json" | jq -r .data)
+echo ${token}
 # 访问需要鉴权的接口
 curl -H "Authorization: ${token}" http://127.0.0.1:1216/xxx
 ```

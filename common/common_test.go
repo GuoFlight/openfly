@@ -9,8 +9,8 @@ import (
 
 func TestBackupFile(t *testing.T) {
 	conf.ParseConfig("../config.toml")
-	conf.PathData = "../test/l4"
-	conf.GConf.Openfly.PathBak = "../test/bak"
+	conf.PathData = "../Test/l4"
+	conf.GConf.Openfly.PathBak = "../Test/bak"
 	logger.InitLog()
 	output, gerr := BackupFile(conf.PathData)
 	if gerr != nil {

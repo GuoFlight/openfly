@@ -16,7 +16,17 @@ func Set(c *gin.Context) {
 		})
 		return
 	}
-	gerr := common.GEtcd.WriteL4(req)
+	// 参数校验
+	gerr := common.GNginx.CheckConfigL4([]common.NginxConfL4{req})
+	if gerr != nil {
+		c.JSON(400, Res{
+			Code: 400,
+			Msg:  gerr.Error(),
+		})
+		return
+	}
+	// 更新配置
+	gerr = common.GEtcd.WriteL4(req)
 	if gerr != nil {
 		logger.PrintErr(gerr, nil)
 		c.JSON(500, Res{
@@ -39,7 +49,17 @@ func Add(c *gin.Context) {
 		})
 		return
 	}
-	gerr := common.GEtcd.AddL4(req)
+	// 参数校验
+	gerr := common.GNginx.CheckConfigL4([]common.NginxConfL4{req})
+	if gerr != nil {
+		c.JSON(400, Res{
+			Code: 400,
+			Msg:  gerr.Error(),
+		})
+		return
+	}
+	// 添加配置
+	gerr = common.GEtcd.AddL4(req)
 	if gerr != nil {
 		logger.PrintErr(gerr, nil)
 		c.JSON(400, Res{
