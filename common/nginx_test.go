@@ -136,3 +136,13 @@ func TestNginx_GetAll(t *testing.T) {
 		fmt.Println(v.Listen)
 	}
 }
+
+func TestNginx_Get(t *testing.T) {
+	conf.ParseConfig("../config.toml")
+	logger.InitLog()
+	got, gerr := GNginx.Get(30001)
+	if gerr != nil {
+		t.Fatal(gerr)
+	}
+	fmt.Println(got)
+}

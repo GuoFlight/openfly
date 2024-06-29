@@ -256,6 +256,23 @@ func (n *Nginx) Reset() *gerror.Gerr {
 	}
 	return nil
 }
+
+// Get 返回值中，监听端口为0，表示配置不存在
+func (n *Nginx) Get(listenPort int) (NginxConfL4, *gerror.Gerr) {
+	kv, gerr := GEtcd.GetL4(listenPort)
+	if gerr != nil {
+		return NginxConfL4{}, gerr
+	}
+	if kv == nil {
+		return NginxConfL4{}, nil
+	}
+	var l4 NginxConfL4
+	err := json.Unmarshal(kv.Value, &l4)
+	if err != nil {
+		logger.GLogger.WithFields(logrus.Fields{"key": string(kv.Key), "value": string(kv.Value)}).Error("解析json失败")
+	}
+	return l4, nil
+}
 func (n *Nginx) GetAll() ([]NginxConfL4, *gerror.Gerr) {
 	kvs, gerr := GEtcd.GetAllL4()
 	if gerr != nil {

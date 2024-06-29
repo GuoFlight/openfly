@@ -24,6 +24,7 @@ func StartHttpServer() {
 	subRouterV1AdminNginx := subRouterV1Admin.Group("/nginx")
 	subRouterV1AdminNginx.POST("/set", v1.Set)
 	subRouterV1AdminNginx.POST("/add", v1.Add)
+	subRouterV1AdminNginx.GET("/get", v1.Get)
 	subRouterV1AdminNginx.GET("/getAll", v1.GetAll)
 	subRouterV1AdminNginx.DELETE("/delete", v1.Delete)
 

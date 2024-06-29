@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+	"github.com/GuoFlight/gerror"
 	"github.com/gin-gonic/gin"
 	"openfly/common"
 	"openfly/logger"
@@ -73,6 +75,40 @@ func Add(c *gin.Context) {
 		Msg:  "success",
 	})
 }
+func Get(c *gin.Context) {
+	listen := c.DefaultQuery("listen", "")
+	if listen == "" {
+		GetAll(c)
+		return
+	}
+	listenPort, err := strconv.Atoi(listen)
+	if err != nil {
+		logger.PrintErr(gerror.NewErr(err.Error()), nil)
+		c.JSON(400, Res{
+			Code: 400,
+			Msg:  fmt.Sprintf("invalid port：%s", listen),
+		})
+		return
+	}
+	l4, gerr := common.GNginx.Get(listenPort)
+	if gerr != nil {
+		c.JSON(500, Res{
+			Code: 500,
+			Msg:  gerr.Error(),
+		})
+	}
+	if l4.Listen == 0 {
+		c.JSON(404, Res{
+			Code: 404,
+			Msg:  fmt.Sprintf("Listening port does not exist: %d", listenPort),
+		})
+		return
+	}
+	c.JSON(0, Res{
+		Code: 0,
+		Data: l4,
+	})
+}
 func GetAll(c *gin.Context) {
 	l4s, gerr := common.GNginx.GetAll()
 	if gerr != nil {
@@ -85,7 +121,6 @@ func GetAll(c *gin.Context) {
 	}
 	c.JSON(0, Res{
 		Code: 0,
-		Msg:  "",
 		Data: l4s,
 	})
 }
