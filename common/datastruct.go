@@ -3,11 +3,18 @@ package common
 import "openfly/conf"
 
 type NginxConfL4 struct {
+	Disable      bool            `json:"disable,omitempty"`
 	Listen       int             `json:"listen"`
 	Upstream     Upstream        `json:"upstream"`
 	IncludeFiles []string        `json:"includeFiles,omitempty"`
 	WhiteList    []WhiteListItem `json:"whiteList,omitempty"`
 	Comments     []string        `json:"comments,omitempty"`
+	// 限速
+	ProxyUploadRate   string `json:"proxyUploadRate,omitempty"`
+	ProxyDownloadRate string `json:"proxyDownloadRate,omitempty"`
+	// 超时时间
+	ProxyConnectTimeout string `json:"proxyConnectTimeout,omitempty"`
+	ProxyTimeout        string `json:"proxyTimeout,omitempty"`
 }
 type WhiteListItem struct {
 	Type   conf.OpWhiteList `json:"type"`

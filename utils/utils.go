@@ -17,6 +17,9 @@ func IsPortListening(port int) bool {
 	defer ln.Close()
 	return false
 }
+
+// DelFile 删除文件
+// 文件不存在时不报错
 func DelFile(path string) error {
 	logger.GLogger.Info("即将删除文件：", path)
 	pathAbs, err := filepath.Abs(path)

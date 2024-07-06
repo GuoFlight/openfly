@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -43,6 +44,24 @@ func (n *Nginx) CheckConfigL4(l4s []NginxConfL4) *gerror.Gerr {
 		if !utils.IsValidPort(l4.Listen) {
 			return gerror.NewErr(fmt.Sprintf("invalid port: %d", l4.Listen))
 		}
+		// 校验限速语法
+		re := "^[0-9]+[bBmMgG]?$"
+		regular := regexp.MustCompile(re)
+		if !(l4.ProxyUploadRate == "" || regular.MatchString(l4.ProxyUploadRate)) {
+			return gerror.NewErr(fmt.Sprintf("invalid value of variable ProxyUploadRate: %s", l4.ProxyUploadRate))
+		}
+		if !(l4.ProxyDownloadRate == "" || regular.MatchString(l4.ProxyDownloadRate)) {
+			return gerror.NewErr(fmt.Sprintf("invalid value of variable ProxyDownloadRate: %s", l4.ProxyDownloadRate))
+		}
+		// 校验超时语法
+		re = "^[0-9]+[smh]?$"
+		regular = regexp.MustCompile(re)
+		if !(l4.ProxyConnectTimeout == "" || regular.MatchString(l4.ProxyConnectTimeout)) {
+			return gerror.NewErr(fmt.Sprintf("invalid value of variable ProxyConnectTimeout: %s", l4.ProxyConnectTimeout))
+		}
+		if !(l4.ProxyTimeout == "" || regular.MatchString(l4.ProxyTimeout)) {
+			return gerror.NewErr(fmt.Sprintf("invalid value of variable ProxyTimeout: %s", l4.ProxyTimeout))
+		}
 		// 参数校验：upstream
 		for _, host := range l4.Upstream.Hosts {
 			// 判断上游端口是否合法
@@ -59,7 +78,6 @@ func (n *Nginx) CheckConfigL4(l4s []NginxConfL4) *gerror.Gerr {
 		if gerr != nil {
 			return gerr
 		}
-
 	}
 	return nil
 }
@@ -86,6 +104,20 @@ func (n *Nginx) GenConfigL4(l4 NginxConfL4) (string, *gerror.Gerr) {
 	confServer = append(confServer, fmt.Sprintf("listen %d;", l4.Listen))
 	// 生成proxy_pass语句
 	confServer = append(confServer, fmt.Sprintf("proxy_pass %d;", l4.Listen))
+	// 限速
+	if l4.ProxyUploadRate != "" {
+		confServer = append(confServer, fmt.Sprintf("proxy_upload_rate %s;", l4.ProxyUploadRate))
+	}
+	if l4.ProxyDownloadRate != "" {
+		confServer = append(confServer, fmt.Sprintf("proxy_download_rate %s;", l4.ProxyDownloadRate))
+	}
+	// 超时
+	if l4.ProxyConnectTimeout != "" {
+		confServer = append(confServer, fmt.Sprintf("proxy_connect_timeout %s;", l4.ProxyConnectTimeout))
+	}
+	if l4.ProxyTimeout != "" {
+		confServer = append(confServer, fmt.Sprintf("proxy_timeout %s;", l4.ProxyTimeout))
+	}
 	// 生成include语句
 	if len(l4.IncludeFiles) > 0 {
 		var confIncludeFiles []string
@@ -102,7 +134,7 @@ func (n *Nginx) GenConfigL4(l4 NginxConfL4) (string, *gerror.Gerr) {
 		}
 		confServer = append(confServer, strings.Join(confWhiteList, "\n\t"))
 	}
-	return fmt.Sprintf("%s\n%s\nserver{\n\t%s\n}", commentStr, confUpstream, strings.Join(confServer, "\n\t")), nil
+	return fmt.Sprintf("%s\n%s\nserver {\n\t%s\n}", commentStr, confUpstream, strings.Join(confServer, "\n\t")), nil
 }
 func (n *Nginx) genConfigL4Upstream(upstream Upstream, port int) string {
 	var confUpstream []string
@@ -160,20 +192,32 @@ func (n *Nginx) writeFile(l4 NginxConfL4) *gerror.Gerr {
 	return nil
 }
 func (n *Nginx) writeFileAndReload(l4 NginxConfL4) *gerror.Gerr {
-	gerr := n.writeFile(l4)
+	var gerr *gerror.Gerr
+	if l4.Disable {
+		gerr = n.delFile(l4)
+	} else {
+		gerr = n.writeFile(l4)
+	}
 	if gerr != nil {
 		return gerr
 	}
 	_, gerr = n.testAndReload()
 	return gerr
 }
-func (n *Nginx) delFileAndReload(l4 NginxConfL4) *gerror.Gerr {
+func (n *Nginx) delFile(l4 NginxConfL4) *gerror.Gerr {
 	targetFile := n.GenFilePathL4(l4)
 	err := utils.DelFile(targetFile)
 	if err != nil {
 		return gerror.NewErr(err.Error())
 	}
-	_, gerr := n.testAndReload()
+	return nil
+}
+func (n *Nginx) delFileAndReload(l4 NginxConfL4) *gerror.Gerr {
+	gerr := n.delFile(l4)
+	if gerr != nil {
+		return gerr
+	}
+	_, gerr = n.testAndReload()
 	return gerr
 }
 func (n *Nginx) Test() (string, *gerror.Gerr) {

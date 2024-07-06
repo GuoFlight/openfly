@@ -53,10 +53,14 @@ func TestNginx_GenConfigL4(t *testing.T) {
 		Timeout:   1000,
 	}
 	confL4 := NginxConfL4{
-		Listen:       8081,
-		Upstream:     upstream,
-		IncludeFiles: []string{"/a/b.conf", "/c/d.conf"},
-		Comments:     []string{"我是注释", "I am the comment."},
+		Listen:              8081,
+		Upstream:            upstream,
+		IncludeFiles:        []string{"/a/b.conf", "/c/d.conf"},
+		Comments:            []string{"我是注释", "I am the comment."},
+		ProxyDownloadRate:   "30M",
+		ProxyUploadRate:     "20M",
+		ProxyConnectTimeout: "1s",
+		ProxyTimeout:        "2m",
 		WhiteList: []WhiteListItem{
 			{
 				conf.Allow,
@@ -145,4 +149,17 @@ func TestNginx_Get(t *testing.T) {
 		t.Fatal(gerr)
 	}
 	fmt.Println(got)
+}
+
+func TestNginx_CheckConfigL4(t *testing.T) {
+	gerr := GNginx.CheckConfigL4([]NginxConfL4{
+		{
+			Listen:          80,
+			ProxyUploadRate: "12M",
+			ProxyTimeout:    "11h",
+		},
+	})
+	if gerr != nil {
+		fmt.Println(gerr)
+	}
 }

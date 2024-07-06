@@ -27,6 +27,7 @@ func StartHttpServer() {
 	subRouterV1AdminNginx.GET("/get", v1.Get)
 	subRouterV1AdminNginx.GET("/getAll", v1.GetAll)
 	subRouterV1AdminNginx.DELETE("/delete", v1.Delete)
+	subRouterV1AdminNginx.POST("/switch", v1.Switch)
 
 	// 启动http服务
 	logger.GLogger.Info("开始启动http服务")
