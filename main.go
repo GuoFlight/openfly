@@ -7,6 +7,9 @@ import (
 	"openfly/conf"
 	"openfly/flag"
 	"openfly/logger"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -35,6 +38,23 @@ func main() {
 	// 启动http服务
 	go api.StartHttpServer()
 
-	// 阻塞主进程
-	select {}
+	// 优雅退出
+	sig := make(chan os.Signal)
+	done := make(chan bool)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		for {
+			s := <-sig
+			switch s {
+			case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+				logger.GLogger.Info("app收到退出信号：", s)
+				<-api.Done
+				logger.GLogger.Info("app正常退出")
+				done <- true
+			default:
+				fmt.Println("app收到即将忽略的信号:", s)
+			}
+		}
+	}()
+	<-done
 }

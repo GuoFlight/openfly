@@ -3,10 +3,14 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/tylerb/graceful"
+	"net/http"
 	v1 "openfly/api/v1"
 	"openfly/conf"
 	"openfly/logger"
 )
+
+var Done = make(chan bool)
 
 func StartHttpServer() {
 	router := gin.New()
@@ -31,8 +35,20 @@ func StartHttpServer() {
 
 	// 启动http服务
 	logger.GLogger.Info("开始启动http服务")
-	err := router.Run(fmt.Sprintf(":%d", conf.GConf.Http.Port))
+	server := graceful.Server{
+		Server: &http.Server{
+			Addr:    fmt.Sprintf(":%d", conf.GConf.Http.Port),
+			Handler: router,
+		},
+		BeforeShutdown: func() bool {
+			logger.GLogger.Info("即将关闭http服务")
+			return true
+		},
+	}
+	err := server.ListenAndServe()
 	if err != nil {
 		logger.GLogger.Fatal(err)
 	}
+	logger.GLogger.Info("http服务已退出")
+	Done <- true
 }
