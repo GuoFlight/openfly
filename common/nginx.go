@@ -78,6 +78,17 @@ func (n *Nginx) CheckConfigL4(l4s []NginxConfL4) *gerror.Gerr {
 		if gerr != nil {
 			return gerr
 		}
+		// 参数校验：日志
+		reLogBuffer := "^[0-9]+[km]?$"
+		regular = regexp.MustCompile(reLogBuffer)
+		if l4.Log.Buffer != "" && !regular.MatchString(l4.Log.Buffer) {
+			return gerror.NewErr(fmt.Sprintf("invalid buffer: %s,Expected: %s", l4.Log.Buffer, reLogBuffer))
+		}
+		reLogFlush := "^[0-9]+[sm]?$"
+		regular = regexp.MustCompile(reLogFlush)
+		if l4.Log.Flush != "" && !regular.MatchString(l4.Log.Flush) {
+			return gerror.NewErr(fmt.Sprintf("invalid flush: %s,Expected: %s", l4.Log.Flush, reLogFlush))
+		}
 	}
 	return nil
 }
@@ -102,6 +113,11 @@ func (n *Nginx) GenConfigL4(l4 NginxConfL4) (string, *gerror.Gerr) {
 	confUpstream := n.genConfigL4Upstream(l4.Upstream, l4.Listen)
 	// 生成server语句
 	confServer = append(confServer, fmt.Sprintf("listen %d;", l4.Listen))
+	// 生成access_log语句
+	confLog := n.genConfigL4Log(l4)
+	if confLog != "" {
+		confServer = append(confServer, confLog)
+	}
 	// 生成proxy_pass语句
 	confServer = append(confServer, fmt.Sprintf("proxy_pass %d;", l4.Listen))
 	// 限速
@@ -135,6 +151,35 @@ func (n *Nginx) GenConfigL4(l4 NginxConfL4) (string, *gerror.Gerr) {
 		confServer = append(confServer, strings.Join(confWhiteList, "\n\t"))
 	}
 	return fmt.Sprintf("%s\n%s\nserver {\n\t%s\n}", commentStr, confUpstream, strings.Join(confServer, "\n\t")), nil
+}
+func (n *Nginx) genConfigL4Log(l4 NginxConfL4) string {
+	if l4.Log.Mod == "local" {
+		// 日志路径
+		if l4.Log.Path == "" {
+			l4.Log.Path = filepath.Join(conf.GConf.L4.Log.Path, fmt.Sprintf("%d.stream.log", l4.Listen))
+		}
+		ret := fmt.Sprintf("access_log %s", l4.Log.Path)
+		// 日志格式
+		if l4.Log.FormatName == "" {
+			l4.Log.FormatName = conf.GConf.L4.Log.FormatNameDefault
+		}
+		if l4.Log.FormatName != "" {
+			ret = ret + " " + l4.Log.FormatName
+		}
+		// buffer
+		if l4.Log.Buffer != "" {
+			ret = ret + " " + fmt.Sprintf("buffer=%s", l4.Log.Buffer)
+		}
+		// flush
+		if l4.Log.Flush != "" {
+			ret = ret + " " + fmt.Sprintf("flush=%s", l4.Log.Flush)
+		}
+		return ret + ";"
+	} else if l4.Log.Mod == "off" {
+		return "access_log off;"
+	} else {
+		return ""
+	}
 }
 func (n *Nginx) genConfigL4Upstream(upstream Upstream, port int) string {
 	var confUpstream []string

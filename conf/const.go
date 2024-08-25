@@ -1,7 +1,7 @@
 package conf
 
 var (
-	Version         = "v0.4.0"
+	Version         = "v0.5.0"
 	NgFileExtension = ".conf"
 	EtcdSubPathL4   = "/l4"
 )

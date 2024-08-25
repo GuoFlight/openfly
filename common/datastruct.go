@@ -9,6 +9,8 @@ type NginxConfL4 struct {
 	IncludeFiles []string        `json:"includeFiles,omitempty"`
 	WhiteList    []WhiteListItem `json:"whiteList,omitempty"`
 	Comments     []string        `json:"comments,omitempty"`
+	// 日志
+	Log NginxLog `json:"log,omitempty"`
 	// 限速
 	ProxyUploadRate   string `json:"proxyUploadRate,omitempty"`
 	ProxyDownloadRate string `json:"proxyDownloadRate,omitempty"`
@@ -40,4 +42,11 @@ type UpstreamHost struct {
 	MaxFails          int    `json:"maxFails,omitempty"`
 	FailTimeoutSecond int    `json:"failTimeoutSecond,omitempty"`
 	IsBackup          bool   `json:"isBackup,omitempty"`
+}
+type NginxLog struct {
+	Mod        string `json:"mod,omitempty"` // off：不打印日志；local：单独打印日志；global/其他：继承全局配置。
+	FormatName string `json:"formatName,omitempty"`
+	Path       string `json:"path,omitempty"`
+	Buffer     string `json:"buffer,omitempty"`
+	Flush      string `json:"flush,omitempty"`
 }

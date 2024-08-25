@@ -61,6 +61,13 @@ func TestNginx_GenConfigL4(t *testing.T) {
 		ProxyUploadRate:     "20M",
 		ProxyConnectTimeout: "1s",
 		ProxyTimeout:        "2m",
+		Log: NginxLog{
+			Mod:        "local",
+			FormatName: "main",
+			Path:       "",
+			Buffer:     "5k",
+			Flush:      "5s",
+		},
 		WhiteList: []WhiteListItem{
 			{
 				conf.Allow,
@@ -162,4 +169,55 @@ func TestNginx_CheckConfigL4(t *testing.T) {
 	if gerr != nil {
 		fmt.Println(gerr)
 	}
+}
+
+func TestNginx_genConfigL4Log(t *testing.T) {
+	l4 := NginxConfL4{Listen: 8081}
+	// 关闭日志
+	l4.Log = NginxLog{
+		Mod:        "off",
+		FormatName: "",
+		Path:       "",
+		Buffer:     "",
+		Flush:      "",
+	}
+	conf := GNginx.genConfigL4Log(l4)
+	fmt.Println(conf)
+	// 输出空
+	l4.Log = NginxLog{
+		Mod: "global",
+	}
+	conf = GNginx.genConfigL4Log(l4)
+	fmt.Println(conf)
+	// 输出空
+	l4.Log = NginxLog{
+		Mod: "hosydfoshdfw0efwef",
+	}
+	conf = GNginx.genConfigL4Log(l4)
+	fmt.Println(conf)
+	// 自动生成日志路径
+	l4.Log = NginxLog{
+		Mod:  "local",
+		Path: "",
+	}
+	conf = GNginx.genConfigL4Log(l4)
+	fmt.Println(conf)
+	// 指定日志路径和log_format
+	l4.Log = NginxLog{
+		Mod:        "local",
+		Path:       "/var/log/nginx/test.log",
+		FormatName: "test_log",
+	}
+	conf = GNginx.genConfigL4Log(l4)
+	fmt.Println(conf)
+	// 指定buffer和flush
+	l4.Log = NginxLog{
+		Mod:        "local",
+		Path:       "/var/log/nginx/test.log",
+		FormatName: "test_log",
+		Buffer:     "5k",
+		Flush:      "5s",
+	}
+	conf = GNginx.genConfigL4Log(l4)
+	fmt.Println(conf)
 }

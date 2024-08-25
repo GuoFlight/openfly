@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	GConf          ConfigFileStruct
-	PathData       = "./data"
-	DefaultPathBak = "./bak"
+	GConf            ConfigFileStruct
+	PathData         = "./data"
+	DefaultPathBak   = "./bak"
+	DefaultPathL4Log = "/var/log/nginx/l4"
 )
 
 // ConfigFileStruct 配置文件结构体
@@ -41,6 +42,12 @@ type ConfigFileStruct struct {
 		MaxFailsDefault    int `toml:"maxFailsDefault"`
 		FailTimeoutDefault int `toml:"failTimeoutDefault"`
 	} `toml:"nginx"`
+	L4 struct {
+		Log struct {
+			Path              string `toml:"path"`
+			FormatNameDefault string `toml:"formatNameDefault"`
+		} `toml:"log"`
+	} `toml:"l4"`
 }
 
 // ParseConfig 解析配置文件
@@ -72,6 +79,14 @@ func CheckAndInit() {
 		GConf.Openfly.PathBak = DefaultPathBak
 	}
 	err = os.MkdirAll(GConf.Openfly.PathBak, 0770)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 创建L4日志目录
+	if GConf.L4.Log.Path == "" {
+		GConf.L4.Log.Path = DefaultPathL4Log
+	}
+	err = os.MkdirAll(GConf.L4.Log.Path, 0770)
 	if err != nil {
 		log.Fatal(err)
 	}

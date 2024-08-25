@@ -1,3 +1,13 @@
+# v0.5.0
+
+新特性（Features）
+
+* 支持配置nginx日志(access_log)
+
+优化
+
+* 健康检查接口：检查nginx配置是否正确
+
 # v0.4.0
 
 新特性（Features）
